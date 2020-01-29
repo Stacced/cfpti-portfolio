@@ -60,6 +60,7 @@ hr {
     right: 0;
     top: 0;
     background-color:#444444;
+    width: 100%; /* for sidebar removal */
   /*
     background-image:url('/assets/example/bg_suburb.jpg');
     background-size:cover;
@@ -97,6 +98,7 @@ hr {
    background-color:#e9eaed;
    padding-left:0;
    padding-right:0;
+   width: 100%; /* for sidebar removal */
 }
 #main .img-circle {
    margin-top:18px;
@@ -167,9 +169,6 @@ h1,h2,h3 {
 .btn-default {
     color:#666666;
     text-shadow:0 0 1px rgba(0,0,0,.3);
-}
-.form-control {
-	
 }
 
 .panel textarea, .well textarea, textarea.form-control
