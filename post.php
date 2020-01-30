@@ -1,6 +1,18 @@
 <?php
-require_once('functions.php');
-define('MAX_FILESIZE_INDIVIDUAL', 3145728);
+/*
+ * Project  : CFPTi Portfolio
+ * Author   : Stacked - I.FA-P3B
+ * Desc.    : Adds user-submitted post to database
+ */
+
+// Include functions
+require_once('functions/functions.php');
+
+// Start session
+session_start();
+
+// Define vars
+
 $postOk = true;
 $postAlert = '';
 
@@ -11,74 +23,83 @@ $submitted = filter_input(INPUT_POST, 'postSubmit', FILTER_SANITIZE_STRING);
 // Get sent files count and remove empty entries
 $picturesCount = count(array_filter($_FILES['postPictures']['name']));
 $pictures = $_FILES['postPictures'];
-
-// Get PDO
-$pdo = getPDO();
+var_dump($pictures);
 
 // Check if user actually submitted POST data and not accidentally entered the URL
 if ($submitted) {
     // Check if PDO is correctly setup'd
-    if ($pdo) {
+    if (getPDO()) {
         // Insert post in DB
-        $prepQuery = $pdo->prepare('INSERT INTO posts (comment) VALUES (:comment)');
-        $prepQuery->bindParam(':comment', $comment);
+        $post = addPost($comment);
 
         // Check if query execution is OK and files have been passed
-        if ($prepQuery->execute()) {
+        if ($post['success']) {
+            $postAlert = 'Votre post a été ajouté';
             // Check if user submitted pictures
             if ($picturesCount > 0) {
                 // Get post ID
-                $postId = $pdo->lastInsertId();
+                $postId = (int)$post['postId'];
 
                 $target_dir = 'uploads/';
-                for ($i = 0; $i < $picturesCount; $i++) {
-                    // Check individual file size
-                    if ($pictures['size'][$i] <= MAX_FILESIZE_INDIVIDUAL) {
-                        $filename = basename(time() . '_' . $pictures['name'][$i]);
-                        $target_file = $target_dir . $filename;
 
-                        // In order to check if the MIME type is image/*, we need to first store it on the webserver
-                        if (move_uploaded_file($pictures['tmp_name'][$i], $target_file)) {
-                            $filetype = mime_content_type($target_file);
-                            if (strpos($filetype, 'image/') !== false) {
-                                // Insert into DB
-                                $sql = 'INSERT INTO medias (mediaType, mediaName, idPost) VALUES (:mediaType, :mediaName, :idPost)';
-                                $prepQuery = $pdo->prepare($sql);
-                                $prepQuery->bindParam(':mediaType', $filetype);
-                                $prepQuery->bindParam(':mediaName', $filename);
-                                $prepQuery->bindParam(':idPost', $postId);
+                // Check if any file is bigger than 3M
+                $sizeOk = checkFilesSize($pictures, $picturesCount);
+                $typeOk = checkFilesType($pictures, $picturesCount);
+                if ($sizeOk) {
+                    // Check file type
+                    if ($typeOk) {
+                        // Loop through all submitted files
+                        for ($i = 0; $i < $picturesCount; $i++) {
+                            $filename = basename(uniqid('', true) . '_' . $pictures['name'][$i]);
+                            $target_file = $target_dir . $filename;
+                            // Move temp file to local storage
+                            move_uploaded_file($pictures['tmp_name'][$i], $target_file);
 
-                                // Check if media was inserted
-                                if ($prepQuery->execute()) {
-                                    $postAlert = 'Votre post a été ajouté';
-                                } else {
-                                    // Remove post from DB
-                                    $sql = 'DELETE FROM posts WHERE idPost = :idPost';
-                                    $prepQuery = $pdo->prepare($sql);
-                                    $prepQuery->bindParam(':idPost', $postId);
+                            // Insert into DB
+                            $file = [
+                                'mediaType' => $pictures['type'][$i],
+                                'mediaName' => $filename,
+                                'idPost' => $postId
+                            ];
 
-                                    $postAlert = "Une erreur s'est produite lors de l'ajout de votre post";
-                                    $postOk = false;
-                                }
+                            // Begin transaction
+                            getPDO()->beginTransaction();
+                            $mediaAdded = addMedia($file);
+
+                            // Check if media was inserted
+                            if ($mediaAdded) {
+                                $postAlert = 'Votre post a été ajouté';
+                                // Commit media add
+                                getPDO()->commit();
                             } else {
-                                // Throw incorrect file format error
-                                $postAlert = "Un de vos fichiers n'est pas une image";
+                                // Rollback media add, delete file
+                                getPDO()->rollBack();
+                                unlink($target_file);
+
+                                // Remove linked post from DB
+                                removePost($postId);
+
+                                $postAlert = "Une erreur s'est produite lors de l'ajout de votre post";
                                 $postOk = false;
                             }
-                        } else {
-                            // File type was not an image
-                            $postAlert = "Une erreur s'est produite lors de l'ajout de votre post";
-                            $postOk = false;
                         }
                     } else {
-                        // File size was too big
-                        $postAlert = 'Un de vos fichiers est trop gros';
+                        // Incorrect file type
+                        // Remove post from DB
+                        removePost($postId);
+
+                        $postAlert = "Un de vos fichiers n'est pas une image";
                         $postOk = false;
                     }
+                } else {
+                    // One file or more was too big
+                    // Remove post from DB
+                    removePost($postId);
+
+                    $postAlert = 'Un de vos fichiers est trop gros (max 3MB par fichier / max 70MB en tout)';
+                    $postOk = false;
                 }
             }
-
-            $postAlert = 'Votre post a été ajouté';
         } else {
             $postAlert = "Une erreur s'est produite lors de l'ajout de votre post";
             $postOk = false;
@@ -87,11 +108,11 @@ if ($submitted) {
         $postAlert = "Une erreur s'est produite lors de l'ajout de votre post";
         $postOk = false;
     }
-
-    // Send back to homepage with alert
-    header('Location: index.php?alert="' . urlencode($postAlert) . '"');
-} else {
-    // Redirect to home page
-    header('Location: index.php');
 }
+// Set session variables and redirect user to home page
+$_SESSION['postOk'] = $postOk;
+$_SESSION['postAlertMsg'] = $postAlert;
+header('Location: index.php');
+exit;
+
 ?>

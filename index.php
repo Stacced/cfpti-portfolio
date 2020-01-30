@@ -1,5 +1,16 @@
 <?php
-$alert = filter_input(INPUT_GET, 'alert', FILTER_SANITIZE_STRING);
+/*
+ * Project  : CFPTi Portfolio
+ * Author   : Stacked - I.FA-P3B
+ * Desc.    : Main view with user-submitted posts (wip)
+ */
+
+// Start session
+session_start();
+
+// Get post publication status
+$postOk = isset($_SESSION['postOk']) ? $_SESSION['postOk'] : null;
+$postAlertMsg = isset($_SESSION['postAlertMsg']) ? $_SESSION['postAlertMsg'] : null;
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -10,9 +21,9 @@ $alert = filter_input(INPUT_GET, 'alert', FILTER_SANITIZE_STRING);
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 	<link href="assets/css/bootstrap.css" rel="stylesheet">
 	<link href="assets/css/facebook.css" rel="stylesheet">
-	<script src="https://kit.fontawesome.com/a51964368d.js" crossorigin="anonymous"></script>
+	<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/css/alertify.min.css"/>
+	<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/css/themes/bootstrap.min.css"/>
 </head>
-
 <body>
 	<div class="wrapper">
 		<div class="box">
@@ -89,7 +100,7 @@ $alert = filter_input(INPUT_GET, 'alert', FILTER_SANITIZE_STRING);
 											<p>45 Followers, 13 Posts</p>
 
 											<p>
-												<img src="assets/img/uFp_tsTJboUY7kue5XAsGAs28.png" height="28px" width="28px">
+												<img src="assets/img/uFp_tsTJboUY7kue5XAsGAs28.png" height="28" width="28">
 											</p>
 										</div>
 									</div>
@@ -153,7 +164,8 @@ $alert = filter_input(INPUT_GET, 'alert', FILTER_SANITIZE_STRING);
 			</div>
 		</div>
 	</div>
-
+	<script src="https://kit.fontawesome.com/a51964368d.js" crossorigin="anonymous"></script>
+	<script src="//cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/alertify.min.js"></script>
 	<script type="text/javascript" src="assets/js/jquery.js"></script>
 	<script type="text/javascript" src="assets/js/bootstrap.js"></script>
 	<script type="text/javascript">
@@ -166,8 +178,15 @@ $alert = filter_input(INPUT_GET, 'alert', FILTER_SANITIZE_STRING);
 				$('#xs-menu').toggleClass('visible-xs').toggleClass('hidden-xs');
 				$('#btnShow').toggle();
 			});
+            <?php if ($postOk === true) { ?>
+            alertify.success("<?= $postAlertMsg ?>");
+            <?php } else if ($postOk === false) { ?>
+            alertify.error("<?= $postAlertMsg ?>");
+            <?php }
+            	$_SESSION['postOk'] = null;
+				$_SESSION['postAlertMsg'] = null;
+            ?>
 		});
 	</script>
 </body>
-
 </html>
