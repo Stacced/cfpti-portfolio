@@ -6,7 +6,7 @@
  */
 
 // Include functions
-require_once('functions/functions.php');
+require_once('../functions/functions.php');
 
 // Start session
 session_start();
@@ -23,12 +23,13 @@ $submitted = filter_input(INPUT_POST, 'postSubmit', FILTER_SANITIZE_STRING);
 // Get sent files count and remove empty entries
 $picturesCount = count(array_filter($_FILES['postPictures']['name']));
 $pictures = $_FILES['postPictures'];
-var_dump($pictures);
-
 // Check if user actually submitted POST data and not accidentally entered the URL
 if ($submitted) {
     // Check if PDO is correctly setup'd
     if (getPDO()) {
+        // Begin transaction
+        getPDO()->beginTransaction();
+
         // Insert post in DB
         $post = addPost($comment);
 
@@ -40,9 +41,9 @@ if ($submitted) {
                 // Get post ID
                 $postId = (int)$post['postId'];
 
-                $target_dir = 'uploads/';
+                $target_dir = 'uploads/img/';
 
-                // Check if any file is bigger than 3M
+                // Check if any file is bigger than 3M and the type of the file
                 $sizeOk = checkFilesSize($pictures, $picturesCount);
                 $typeOk = checkFilesType($pictures, $picturesCount);
                 if ($sizeOk) {
@@ -62,22 +63,17 @@ if ($submitted) {
                                 'idPost' => $postId
                             ];
 
-                            // Begin transaction
-                            getPDO()->beginTransaction();
                             $mediaAdded = addMedia($file);
 
                             // Check if media was inserted
                             if ($mediaAdded) {
                                 $postAlert = 'Votre post a été ajouté';
-                                // Commit media add
+                                // Commit full transaction (post + media add)
                                 getPDO()->commit();
                             } else {
                                 // Rollback media add, delete file
                                 getPDO()->rollBack();
                                 unlink($target_file);
-
-                                // Remove linked post from DB
-                                removePost($postId);
 
                                 $postAlert = "Une erreur s'est produite lors de l'ajout de votre post";
                                 $postOk = false;
@@ -85,22 +81,27 @@ if ($submitted) {
                         }
                     } else {
                         // Incorrect file type
-                        // Remove post from DB
-                        removePost($postId);
+                        // Rollback transaction
+                        getPDO()->rollBack();
 
                         $postAlert = "Un de vos fichiers n'est pas une image";
                         $postOk = false;
                     }
                 } else {
                     // One file or more was too big
-                    // Remove post from DB
-                    removePost($postId);
+                    // Rollback transaction
+                    getPDO()->rollBack();
 
                     $postAlert = 'Un de vos fichiers est trop gros (max 3MB par fichier / max 70MB en tout)';
                     $postOk = false;
                 }
+            } else {
+                // Commit post add transaction
+                getPDO()->commit();
             }
         } else {
+            // Rollback transaction
+            getPDO()->rollBack();
             $postAlert = "Une erreur s'est produite lors de l'ajout de votre post";
             $postOk = false;
         }
@@ -112,7 +113,7 @@ if ($submitted) {
 // Set session variables and redirect user to home page
 $_SESSION['postOk'] = $postOk;
 $_SESSION['postAlertMsg'] = $postAlert;
-header('Location: index.php');
+header('Location: ../index.php');
 exit;
 
 ?>
