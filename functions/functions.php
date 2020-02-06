@@ -37,6 +37,40 @@ function getPDO() {
 }
 
 /**
+ * Returns an array containing all posts with linked medias
+ * @return array Posts
+ */
+function getPosts() {
+    $sql = 'SELECT posts.idPost, comment, posts.creationDate, posts.editDate, medias.mediaType, medias.mediaName FROM posts LEFT JOIN medias ON medias.idPost = posts.idPost';
+    $posts = [];
+    try {
+        return getPDO()->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return [];
+    }
+}
+
+function displayPosts() {
+    $posts = getPosts();
+    $imgDirectory = 'uploads/img/';
+    $html = '';
+    setlocale(LC_ALL, 'fr_FR');
+    foreach ($posts as $post) {
+        $html .= '<div class="panel panel-default">
+                    <div class="panel-thumbnail"><img src="' . $imgDirectory . $post['mediaName'] . '" class="img-responsive" alt="..."></div>
+                    <div class="panel-body">
+                        <p>' . $post['comment'] . '</p>
+                    </div>
+                    <div class="panel-footer">
+                        <p>Envoyé le ' . strftime('%e %B %Y', strtotime($post['creationDate'])) . '</p>    
+                    </div>
+                </div>';
+    }
+
+    return $html;
+}
+
+/**
  * Adds post to database
  * @param string $comment Post comment
  * @return array
@@ -94,34 +128,6 @@ function addMedia($file) {
         $ps->bindParam(':mediaType', $file['mediaType']);
         $ps->bindParam(':mediaName', $file['mediaName']);
         $ps->bindParam(':idPost', $file['idPost']);
-        $ok = $ps->execute();
-    } catch (PDOException $e) {
-        $ok = false;
-    }
-
-    // Output
-    return $ok;
-}
-
-/**
- * Removes post with ID $idPost from database
- * @param int $idPost
- * @return bool
- */
-function removePost($idPost) {
-    // Init
-    static $ps = null;
-    $sql = 'DELETE FROM posts WHERE idPost = :idPost';
-    $ok = false;
-
-    // Process
-    if ($ps === null) {
-        $ps = getPDO()->prepare($sql);
-    }
-
-    try {
-        // Execute request
-        $ps->bindParam(':idPost', $idPost);
         $ok = $ps->execute();
     } catch (PDOException $e) {
         $ok = false;

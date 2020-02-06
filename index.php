@@ -4,6 +4,8 @@
  * Author   : Stacked - I.FA-P3B
  * Desc.    : Main view with user-submitted posts (wip)
  */
+// Require functions file
+require('functions/functions.php');
 
 // Start session
 session_start();
@@ -113,6 +115,7 @@ $postAlertMsg = isset($_SESSION['postAlertMsg']) ? $_SESSION['postAlertMsg'] : n
 											<h1>Bienvenue !</h1>
 										</div>
 									</div>
+									<?= displayPosts() ?>
 								</div>
 							</div>
 							<!--/row-->
@@ -142,7 +145,7 @@ $postAlertMsg = isset($_SESSION['postAlertMsg']) ? $_SESSION['postAlertMsg'] : n
 					<button type="button" class="close" data-dismiss="modal" aria-hidden="true">X</button>
 					Mettre à jour mon statut
 				</div>
-				<form class="form center-block" method="POST" action="post.php" enctype="multipart/form-data">
+				<form class="form center-block" method="POST" action="scripts/post.php" enctype="multipart/form-data">
 					<div class="modal-body">
 						<div class="form-group">
 							<textarea class="form-control input-lg" autofocus=""
