@@ -115,7 +115,7 @@ $postAlertMsg = isset($_SESSION['postAlertMsg']) ? $_SESSION['postAlertMsg'] : n
 											<h1>Bienvenue !</h1>
 										</div>
 									</div>
-									<?= displayPosts() ?>
+									<?= displayPostsModal() ?>
 								</div>
 							</div>
 							<!--/row-->

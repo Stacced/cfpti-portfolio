@@ -41,7 +41,7 @@ if ($submitted) {
                 // Get post ID
                 $postId = (int)$post['postId'];
 
-                $target_dir = 'uploads/img/';
+                $target_dir = '../uploads/img/';
 
                 // Check if any file is bigger than 3M and the type of the file
                 $sizeOk = checkFilesSize($pictures, $picturesCount);
@@ -49,8 +49,10 @@ if ($submitted) {
                 if ($sizeOk) {
                     // Check file type
                     if ($typeOk) {
+                        $flagMediaError = false;
                         // Loop through all submitted files
                         for ($i = 0; $i < $picturesCount; $i++) {
+                            echo $i;
                             $filename = basename(uniqid('', true) . '_' . $pictures['name'][$i]);
                             $target_file = $target_dir . $filename;
                             // Move temp file to local storage
@@ -68,16 +70,23 @@ if ($submitted) {
                             // Check if media was inserted
                             if ($mediaAdded) {
                                 $postAlert = 'Votre post a été ajouté';
-                                // Commit full transaction (post + media add)
-                                getPDO()->commit();
                             } else {
-                                // Rollback media add, delete file
-                                getPDO()->rollBack();
+                                // Set flag and delete file
+                                $flagMediaError = true;
                                 unlink($target_file);
 
                                 $postAlert = "Une erreur s'est produite lors de l'ajout de votre post";
                                 $postOk = false;
                             }
+                        }
+
+                        // Check if all files were inserted
+                        if (!$flagMediaError) {
+                            // Commit full transaction (post + media add)
+                            getPDO()->commit();
+                        } else {
+                            // Rollback media add
+                            getPDO()->rollBack();
                         }
                     } else {
                         // Incorrect file type

@@ -8,6 +8,11 @@
 // Define vars
 define('MAX_FILESIZE_INDIVIDUAL', 3145728);
 
+// Change locale for dates
+// UTF-8 part is mandatory, otherwise accents will display as question marks
+// Had to uncomment "fr_FR.UTF-8" in /etc/locale.gen and then run locale-gen
+setlocale(LC_ALL, 'fr_FR.UTF-8');
+
 /**
  * Returns PDO object
  * @return PDO|null
@@ -41,32 +46,55 @@ function getPDO() {
  * @return array Posts
  */
 function getPosts() {
-    $sql = 'SELECT posts.idPost, comment, posts.creationDate, posts.editDate, medias.mediaType, medias.mediaName FROM posts LEFT JOIN medias ON medias.idPost = posts.idPost';
-    $posts = [];
+    $sql = 'SELECT posts.idPost, comment, posts.creationDate, posts.editDate, GROUP_CONCAT(medias.mediaType) as mediaTypes, GROUP_CONCAT(medias.mediaName) as mediaNames FROM posts
+            LEFT JOIN medias ON medias.idPost = posts.idPost
+            GROUP BY posts.idPost
+            ORDER BY posts.creationDate DESC';
     try {
-        return getPDO()->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+        $posts = getPDO()->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+        // Using reference variable to directly edit post array
+        foreach ($posts as &$post) {
+            $post['mediaTypes'] = explode(',', $post['mediaTypes']);
+            $post['mediaNames'] = explode(',', $post['mediaNames']);
+        }
+        return $posts;
     } catch (PDOException $e) {
         return [];
     }
 }
 
-function displayPosts() {
+function displayPostsPanel() {
     $posts = getPosts();
-    $imgDirectory = 'uploads/img/';
+    $imgDirectory = 'uploads/img/'; // Dir path from project root
     $html = '';
-    setlocale(LC_ALL, 'fr_FR');
     foreach ($posts as $post) {
-        $html .= '<div class="panel panel-default">
-                    <div class="panel-thumbnail"><img src="' . $imgDirectory . $post['mediaName'] . '" class="img-responsive" alt="..."></div>
-                    <div class="panel-body">
+        $html .= '<div class="panel panel-default">';
+        foreach ($post['mediaNames'] as $mediaName) {
+            $html .= '<div class="panel-thumbnail"><img src="' . $imgDirectory . $mediaName . '" class="img-responsive" alt="..."></div>';
+        }
+        $html .= '<div class="panel-body">
                         <p>' . $post['comment'] . '</p>
                     </div>
                     <div class="panel-footer">
-                        <p>Envoyé le ' . strftime('%e %B %Y', strtotime($post['creationDate'])) . '</p>    
-                    </div>
-                </div>';
+                        <p>Envoyé le ' . strftime('%e %B %Y', strtotime($post['creationDate'])) . ' à ' . strftime('%R', strtotime($post['creationDate'])) . '</p>    
+                    </div></div>';
     }
 
+    return $html;
+}
+
+function displayPostsModal() {
+    $posts = getPosts();
+    $imgDirectory = 'uploads/img/';
+    $html = '';
+    foreach ($posts as $post) {
+        $html .= '<div class="modal-content"><div class="modal-body post-body">';
+        foreach ($post['mediaNames'] as $mediaName) {
+            $html .= '<img src="' . $imgDirectory . $mediaName . '" class="img-responsive" alt="...">';
+        }
+        $html .= '<br>' . $post['comment'] . '</div>';
+        $html .= '<div class="modal-footer">Envoyé le ' . strftime('%e %B %Y', strtotime($post['creationDate'])) . ' à ' . strftime('%R', strtotime($post['creationDate'])) . '</div></div>';
+    }
     return $html;
 }
 
