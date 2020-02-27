@@ -157,7 +157,7 @@ $postAlertMsg = isset($_SESSION['postAlertMsg']) ? $_SESSION['postAlertMsg'] : n
 							<input type="submit" class="btn btn-primary btn-sm" aria-hidden="true" value="Poster" name="postSubmit">
 							<ul class="pull-left list-inline">
 								<li>
-									<input type="file" name="postMedias[]" multiple id="postMedias" style="display: none" accept="image/*,video/mp4,video/ogg,video/webm">
+									<input type="file" name="postMedias[]" multiple id="postMedias" style="display: none" accept="image/*,video/mp4,video/ogg,video/webm,audio/mpeg,audio/ogg,audio/wav">
 									<label for="postMedias"><i class="fas fa-camera"></i></label>
 								</li>
 							</ul>

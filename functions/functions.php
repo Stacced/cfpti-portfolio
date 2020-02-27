@@ -8,6 +8,7 @@
 // Define vars
 define('MAX_FILESIZE_IMAGE', 3145728);
 define('MAX_FILESIZE_VIDEO', 10485760);
+define('MAX_FILESIZE_AUDIO', 41943040);
 
 // Change locale for dates
 // UTF-8 part is mandatory, otherwise accents will display as question marks
@@ -75,7 +76,9 @@ function displayPostsModal() {
             if (strpos($post['mediaTypes'][$i], 'image/') !== false) {
                 $html .= '<img src="' . $uploaddir . $post['mediaNames'][$i] . '" class="img-responsive" alt="...">';
             } else if (strpos($post['mediaTypes'][$i], 'video/') !== false) {
-                $html .= '<video  width="320" height="240" controls autoplay style="margin-right: 10px"><source src="' . $uploaddir . $post['mediaNames'][$i] . '" type="' . $post['mediaTypes'][$i] .'">Video tag not supported</video>';
+                $html .= '<video width="320" height="240" controls autoplay style="margin-right: 10px"><source src="' . $uploaddir . $post['mediaNames'][$i] . '" type="' . $post['mediaTypes'][$i] .'">Video tag not supported</video>';
+            } else if (strpos($post['mediaTypes'][$i], 'audio/') !== false) {
+                $html .= '<audio controls><source src="' . $uploaddir . $post['mediaNames'][$i] . '" type="' . $post['mediaTypes'][$i] . '"></audio>';
             }
         }
 
@@ -174,6 +177,11 @@ function checkFilesSize($files, $filesCount) {
                 $sizeOk = false;
                 break;
             }
+        } else if (strpos($fileType, 'audio/') !== false) {
+            if ($files['size'][$i] > MAX_FILESIZE_AUDIO) {
+                $sizeOk = false;
+                break;
+            }
         }
 
     }
@@ -193,7 +201,7 @@ function checkFilesType($files, $filesCount) {
     $typeOk = true;
     for ($i = 0; $i < $filesCount; $i++) {
         $fileType = mime_content_type($files['tmp_name'][$i]);
-        if (strpos($fileType, 'image/') === false && !preg_match('/mp4|ogg|webm/i', $fileType)) {
+        if (strpos($fileType, 'image/') === false && !preg_match('/mp4|ogg|webm/i', $fileType) && !preg_match('/mpeg|ogg|wav/i', $fileType)) {
             $typeOk = false;
             break;
         }
@@ -215,6 +223,8 @@ function returnUploadDir($fileType) {
         $uploaddir .= 'img/';
     } else if (strpos($fileType, 'video/') !== false) {
         $uploaddir .= 'videos/';
+    } else if (strpos($fileType, 'audio/') !== false) {
+        $uploaddir .= 'sounds/';
     }
 
     // Output
