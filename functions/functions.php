@@ -6,7 +6,8 @@
  */
 
 // Define vars
-define('MAX_FILESIZE_INDIVIDUAL', 3145728);
+define('MAX_FILESIZE_IMAGE', 3145728);
+define('MAX_FILESIZE_VIDEO', 10485760);
 
 // Change locale for dates
 // UTF-8 part is mandatory, otherwise accents will display as question marks
@@ -63,35 +64,21 @@ function getPosts() {
     }
 }
 
-function displayPostsPanel() {
-    $posts = getPosts();
-    $imgDirectory = 'uploads/img/'; // Dir path from project root
-    $html = '';
-    foreach ($posts as $post) {
-        $html .= '<div class="panel panel-default">';
-        foreach ($post['mediaNames'] as $mediaName) {
-            $html .= '<div class="panel-thumbnail"><img src="' . $imgDirectory . $mediaName . '" class="img-responsive" alt="..."></div>';
-        }
-        $html .= '<div class="panel-body">
-                        <p>' . $post['comment'] . '</p>
-                    </div>
-                    <div class="panel-footer">
-                        <p>Envoyé le ' . strftime('%e %B %Y', strtotime($post['creationDate'])) . ' à ' . strftime('%R', strtotime($post['creationDate'])) . '</p>    
-                    </div></div>';
-    }
-
-    return $html;
-}
-
 function displayPostsModal() {
     $posts = getPosts();
-    $imgDirectory = 'uploads/img/';
     $html = '';
     foreach ($posts as $post) {
         $html .= '<div class="modal-content"><div class="modal-body post-body">';
-        foreach ($post['mediaNames'] as $mediaName) {
-            $html .= '<img src="' . $imgDirectory . $mediaName . '" class="img-responsive" alt="...">';
+
+        for ($i = 0; $i < count($post['mediaNames']); $i++) {
+            $uploaddir = returnUploadDir($post['mediaTypes'][$i]);
+            if (strpos($post['mediaTypes'][$i], 'image/') !== false) {
+                $html .= '<img src="' . $uploaddir . $post['mediaNames'][$i] . '" class="img-responsive" alt="...">';
+            } else if (strpos($post['mediaTypes'][$i], 'video/') !== false) {
+                $html .= '<video  width="320" height="240" controls autoplay style="margin-right: 10px"><source src="' . $uploaddir . $post['mediaNames'][$i] . '" type="' . $post['mediaTypes'][$i] .'">Video tag not supported</video>';
+            }
         }
+
         $html .= '<br>' . $post['comment'] . '</div>';
         $html .= '<div class="modal-footer">Envoyé le ' . strftime('%e %B %Y', strtotime($post['creationDate'])) . ' à ' . strftime('%R', strtotime($post['creationDate'])) . '</div></div>';
     }
@@ -175,10 +162,20 @@ function checkFilesSize($files, $filesCount) {
     // Process
     $sizeOk = true;
     for ($i = 0; $i < $filesCount; $i++) {
-        if ($files['size'][$i] > MAX_FILESIZE_INDIVIDUAL) {
-            $sizeOk = false;
-            break;
+        $fileType = $files['type'][$i];
+
+        if (strpos($fileType, 'image/') !== false) {
+            if ($files['size'][$i] > MAX_FILESIZE_IMAGE) {
+                $sizeOk = false;
+                break;
+            }
+        } else if (strpos($fileType, 'video/') !== false) {
+            if ($files['size'][$i] > MAX_FILESIZE_VIDEO) {
+                $sizeOk = false;
+                break;
+            }
         }
+
     }
 
     // Output
@@ -186,7 +183,7 @@ function checkFilesSize($files, $filesCount) {
 }
 
 /**
- * Checks if $files array ($_FILES formatted) contains images only (MIME type check)
+ * Checks if $files array ($_FILES formatted) contains images, videos only (MIME type check)
  * @param array $files $_FILES array
  * @param int $filesCount Files count
  * @return bool
@@ -196,7 +193,7 @@ function checkFilesType($files, $filesCount) {
     $typeOk = true;
     for ($i = 0; $i < $filesCount; $i++) {
         $fileType = mime_content_type($files['tmp_name'][$i]);
-        if (strpos($fileType, 'image/') === false) {
+        if (strpos($fileType, 'image/') === false && !preg_match('/mp4|ogg|webm/i', $fileType)) {
             $typeOk = false;
             break;
         }
@@ -204,5 +201,23 @@ function checkFilesType($files, $filesCount) {
 
     // Output
     return $typeOk;
+}
+
+/**
+ * Returns corresponding file type upload directory path
+ * @param string $fileType MIME file type
+ * @return string Upload directory path
+ */
+function returnUploadDir($fileType) {
+    // Process
+    $uploaddir = 'uploads/';
+    if (strpos($fileType, 'image/') !== false) {
+        $uploaddir .= 'img/';
+    } else if (strpos($fileType, 'video/') !== false) {
+        $uploaddir .= 'videos/';
+    }
+
+    // Output
+    return $uploaddir;
 }
 ?>

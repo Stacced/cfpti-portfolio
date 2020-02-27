@@ -21,8 +21,8 @@ $comment = filter_input(INPUT_POST, 'postComment', FILTER_SANITIZE_STRING);
 $submitted = filter_input(INPUT_POST, 'postSubmit', FILTER_SANITIZE_STRING);
 
 // Get sent files count and remove empty entries
-$picturesCount = count(array_filter($_FILES['postPictures']['name']));
-$pictures = $_FILES['postPictures'];
+$mediasCount = count(array_filter($_FILES['postMedias']['name']));
+$medias = $_FILES['postMedias'];
 // Check if user actually submitted POST data and not accidentally entered the URL
 if ($submitted) {
     // Check if PDO is correctly setup'd
@@ -37,30 +37,30 @@ if ($submitted) {
         if ($post['success']) {
             $postAlert = 'Votre post a été ajouté';
             // Check if user submitted pictures
-            if ($picturesCount > 0) {
+            if ($mediasCount > 0) {
                 // Get post ID
                 $postId = (int)$post['postId'];
 
-                $target_dir = '../uploads/img/';
-
-                // Check if any file is bigger than 3M and the type of the file
-                $sizeOk = checkFilesSize($pictures, $picturesCount);
-                $typeOk = checkFilesType($pictures, $picturesCount);
-                if ($sizeOk) {
-                    // Check file type
-                    if ($typeOk) {
+                $sizeOk = checkFilesSize($medias, $mediasCount);
+                $typeOk = checkFilesType($medias, $mediasCount);
+                // Check file type
+                if ($typeOk) {
+                    // Check if any file is bigger than 3M and the type of the file
+                    if ($sizeOk) {
                         $flagMediaError = false;
                         // Loop through all submitted files
-                        for ($i = 0; $i < $picturesCount; $i++) {
-                            echo $i;
-                            $filename = basename(uniqid('', true) . '_' . $pictures['name'][$i]);
-                            $target_file = $target_dir . $filename;
+                        for ($i = 0; $i < $mediasCount; $i++) {
+                            // Detect file type and move file to corresponding folder
+                            $uploaddir = '../' . returnUploadDir($medias['type'][$i]);
+
+                            $filename = basename(uniqid('', true) . '_' . $medias['name'][$i]);
+                            $target_file = $uploaddir . $filename;
                             // Move temp file to local storage
-                            move_uploaded_file($pictures['tmp_name'][$i], $target_file);
+                            $result = move_uploaded_file($medias['tmp_name'][$i], $target_file);
 
                             // Insert into DB
                             $file = [
-                                'mediaType' => $pictures['type'][$i],
+                                'mediaType' => $medias['type'][$i],
                                 'mediaName' => $filename,
                                 'idPost' => $postId
                             ];
@@ -93,7 +93,7 @@ if ($submitted) {
                         // Rollback transaction
                         getPDO()->rollBack();
 
-                        $postAlert = "Un de vos fichiers n'est pas une image";
+                        $postAlert = 'Un de vos fichiers est trop gros (max 3MB par image / max 10MB par vidéo / max 70MB en tout)';
                         $postOk = false;
                     }
                 } else {
@@ -101,7 +101,7 @@ if ($submitted) {
                     // Rollback transaction
                     getPDO()->rollBack();
 
-                    $postAlert = 'Un de vos fichiers est trop gros (max 3MB par fichier / max 70MB en tout)';
+                    $postAlert = "Un de vos fichiers n'est pas un média supporté (image, vidéo ou audio)";
                     $postOk = false;
                 }
             } else {
