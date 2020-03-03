@@ -220,7 +220,6 @@ h1,h2,h3 {
 
 .modal-footer i, .well i {
     font-size:20px;
-    color:#c0c0c0;
 }
 
 .modal-body {
@@ -294,4 +293,13 @@ small.text-muted {
   #sidebar, #sidebar a, #sidebar-footer a {
     padding-left:3px;
   }
+}
+
+
+.btn-actions-group {
+    margin-left: 10px;
+}
+
+.warning-icon, .delete-icon {
+    color: white;
 }

@@ -167,6 +167,28 @@ $postAlertMsg = isset($_SESSION['postAlertMsg']) ? $_SESSION['postAlertMsg'] : n
 			</div>
 		</div>
 	</div>
+
+	<!-- delete modal -->
+	<div id="deleteModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-hidden="true">X</button>
+					Suppression du post
+				</div>
+				<form class="form center-block" method="POST" action="scripts/removePost.php" enctype="multipart/form-data">
+					<div class="modal-body">
+						<div class="form-group">
+							Êtes-vous sûr de vouloir supprimer ce post ?
+						</div>
+					</div>
+					<div class="modal-footer">
+						<input type="submit" class="btn btn-danger btn-sm" aria-hidden="true" value="Confirmer la suppression" name="postSubmit">
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
 	<script src="https://kit.fontawesome.com/a51964368d.js" crossorigin="anonymous"></script>
 	<script src="//cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/alertify.min.js"></script>
 	<script type="text/javascript" src="assets/js/jquery.js"></script>
