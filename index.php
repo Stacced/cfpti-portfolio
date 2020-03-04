@@ -34,55 +34,7 @@ $postAlertMsg = isset($_SESSION['postAlertMsg']) ? $_SESSION['postAlertMsg'] : n
 				<div class="column col-sm-10 col-xs-11" id="main">
 
 					<!-- top nav -->
-					<div class="navbar navbar-blue navbar-static-top">
-						<div class="navbar-header">
-							<button class="navbar-toggle" type="button" data-toggle="collapse"
-								data-target=".navbar-collapse">
-								<span class="sr-only">Toggle</span>
-								<span class="icon-bar"></span>
-								<span class="icon-bar"></span>
-								<span class="icon-bar"></span>
-							</button>
-							<a href="#" class="navbar-brand logo">F</a>
-						</div>
-						<nav class="collapse navbar-collapse" role="navigation">
-							<form class="navbar-form navbar-left">
-								<div class="input-group input-group-sm" style="min-width:360px;">
-									<input class="form-control" placeholder="Search" name="srch-term" id="srch-term"
-										type="text">
-									<div class="input-group-btn">
-										<button class="btn btn-default" type="submit"><i
-												class="fas fa-search"></i></button>
-									</div>
-								</div>
-							</form>
-							<ul class="nav navbar-nav">
-								<li>
-									<a href="#"><i class="fas fa-home"></i> Accueil</a>
-								</li>
-								<li>
-									<a href="#postModal" role="button" data-toggle="modal"><i class="fas fa-plus"></i>
-										Post</a>
-								</li>
-								<li>
-									<a href="#"><span class="badge">badge</span></a>
-								</li>
-							</ul>
-							<ul class="nav navbar-nav navbar-right">
-								<li class="dropdown">
-									<a href="#" class="dropdown-toggle" data-toggle="dropdown"><i
-											class="fas fa-user"></i></a>
-									<ul class="dropdown-menu">
-										<li><a href="">More</a></li>
-										<li><a href="">More</a></li>
-										<li><a href="">More</a></li>
-										<li><a href="">More</a></li>
-										<li><a href="">More</a></li>
-									</ul>
-								</li>
-							</ul>
-						</nav>
-					</div>
+					<?php include('nav.inc.php'); ?>
 					<!-- /top nav -->
 
 					<div class="padding">
@@ -189,29 +141,21 @@ $postAlertMsg = isset($_SESSION['postAlertMsg']) ? $_SESSION['postAlertMsg'] : n
 			</div>
 		</div>
 	</div>
-	<script src="https://kit.fontawesome.com/a51964368d.js" crossorigin="anonymous"></script>
-	<script src="//cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/alertify.min.js"></script>
-	<script type="text/javascript" src="assets/js/jquery.js"></script>
-	<script type="text/javascript" src="assets/js/bootstrap.js"></script>
-	<script type="text/javascript">
-		$(document).ready(function () {
-			$('[data-toggle=offcanvas]').click(function () {
-				$(this).toggleClass('visible-xs text-center');
-				$(this).find('i').toggleClass('glyphicon-chevron-right glyphicon-chevron-left');
-				$('.row-offcanvas').toggleClass('active');
-				$('#lg-menu').toggleClass('hidden-xs').toggleClass('visible-xs');
-				$('#xs-menu').toggleClass('visible-xs').toggleClass('hidden-xs');
-				$('#btnShow').toggle();
-			});
-            <?php if ($postOk === true) { ?>
-            alertify.success("<?= $postAlertMsg ?>");
-            <?php } else if ($postOk === false) { ?>
-            alertify.error("<?= $postAlertMsg ?>");
-            <?php }
-            	$_SESSION['postOk'] = null;
-				$_SESSION['postAlertMsg'] = null;
-            ?>
-		});
-	</script>
 </body>
+<script src="https://kit.fontawesome.com/a51964368d.js" crossorigin="anonymous"></script>
+<script src="//cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/alertify.min.js"></script>
+<script type="text/javascript" src="assets/js/jquery.js"></script>
+<script type="text/javascript" src="assets/js/bootstrap.js"></script>
+<script type="text/javascript">
+    $(document).ready(function () {
+        <?php if ($postOk === true) { ?>
+        alertify.success("<?= $postAlertMsg ?>");
+        <?php } else if ($postOk === false) { ?>
+        alertify.error("<?= $postAlertMsg ?>");
+        <?php }
+        $_SESSION['postOk'] = null;
+        $_SESSION['postAlertMsg'] = null;
+        ?>
+    });
+</script>
 </html>

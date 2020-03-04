@@ -94,7 +94,7 @@ function displayPostsModal() {
         for ($i = 0; $i < count($post['mediaNames']); $i++) {
             $uploaddir = returnUploadDir($post['mediaTypes'][$i]);
             if (strpos($post['mediaTypes'][$i], 'image/') !== false) {
-                $html .= '<img src="' . $uploaddir . $post['mediaNames'][$i] . '" class="img-responsive" alt="...">';
+                $html .= '<img src="' . $uploaddir . $post['mediaNames'][$i] . '" class="img-responsive" alt="..." style="max-height: 200px">';
             } else if (strpos($post['mediaTypes'][$i], 'video/') !== false) {
                 $html .= '<video width="320" height="240" controls autoplay style="margin-right: 10px"><source src="' . $uploaddir . $post['mediaNames'][$i] . '" type="' . $post['mediaTypes'][$i] .'">Video tag not supported</video>';
             } else if (strpos($post['mediaTypes'][$i], 'audio/') !== false) {
