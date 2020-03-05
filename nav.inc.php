@@ -22,9 +22,11 @@
             <li>
                 <a href="index.php"><i class="fas fa-home"></i> Accueil</a>
             </li>
+			<?php if (strpos($_SERVER['PHP_SELF'], 'updatePost') === false): ?>
             <li>
                 <a href="#postModal" role="button" data-toggle="modal"><i class="fas fa-plus"></i> Post</a>
             </li>
+            <?php endif; ?>
         </ul>
     </nav>
 </div>

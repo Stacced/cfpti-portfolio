@@ -47,8 +47,7 @@ $postAlertMsg = isset($_SESSION['postAlertMsg']) ? $_SESSION['postAlertMsg'] : n
 								<div class="col-sm-5">
 
 									<div class="panel panel-default">
-										<div class="panel-thumbnail"><img src="assets/img/bg_5.jpg"
-												class="img-responsive"></div>
+										<div class="panel-thumbnail"><img src="assets/img/bg_5.jpg" class="img-responsive"></div>
 										<div class="panel-body">
 											<p class="lead">Facebook CFPT</p>
 											<p>45 Followers, 13 Posts</p>
@@ -100,8 +99,7 @@ $postAlertMsg = isset($_SESSION['postAlertMsg']) ? $_SESSION['postAlertMsg'] : n
 				<form class="form center-block" method="POST" action="scripts/post.php" enctype="multipart/form-data">
 					<div class="modal-body">
 						<div class="form-group">
-							<textarea class="form-control input-lg" autofocus=""
-								placeholder="Que voulez-vous partager ?" name="postComment"></textarea>
+							<textarea class="form-control input-lg" autofocus="" placeholder="Que voulez-vous partager ?" name="postComment"></textarea>
 						</div>
 					</div>
 					<div class="modal-footer">

@@ -1,3 +1,13 @@
+<?php
+session_start();
+require('functions/functions.php');
+
+$idPost = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT);
+$submit = filter_input(INPUT_POST, 'submitUpdate', FILTER_SANITIZE_STRING);
+$updatedComment = filter_input(INPUT_POST, 'updatedComment', FILTER_SANITIZE_STRING);
+$updatedMedias = $_FILES['updatedMedias'];
+
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -29,15 +39,33 @@
 
 							<!-- main col left -->
 							<div class="col-sm-5">
+								<div class="panel panel-default">
+									<div class="panel-thumbnail"><img src="assets/img/bg_5.jpg" class="img-responsive"></div>
+									<div class="panel-body">
+										<p class="lead">Facebook CFPT</p>
+										<p>45 Followers, 13 Posts</p>
 
+										<p>
+											<img src="assets/img/uFp_tsTJboUY7kue5XAsGAs28.png" height="28" width="28">
+										</p>
+									</div>
+								</div>
 							</div>
 
 							<!-- main col right -->
 							<div class="col-sm-7">
+
+								<!--Mot accueil-->
 								<div class="panel panel-default">
 									<div class="panel-heading">
-										<h1>Bienvenue !</h1>
+										<h1>Mise à jour de post</h1>
 									</div>
+								</div>
+
+								<div class="panel panel-default">
+									<form method="POST" action="updatePost.php?id=<?= $idPost ?>">
+										<?= displayPostUpdatePanel($idPost) ?>
+									</form>
 								</div>
 							</div>
 						</div>
@@ -50,12 +78,10 @@
 							</div>
 						</div>
 
-						<div class="row" id="footer"></div>
 					</div><!-- /col-9 -->
 				</div><!-- /padding -->
 			</div>
 			<!-- /main -->
-
 		</div>
 	</div>
 </div>

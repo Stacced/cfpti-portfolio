@@ -65,6 +65,29 @@ function getPosts() {
     }
 }
 
+/**
+ * Returns an array containing post data with passed ID
+ * @param $idPost
+ * @return array|mixed
+ */
+function getPostById($idPost) {
+    $sql = 'SELECT idPost, comment FROM posts WHERE idPost = :idPost';
+
+    try {
+        $ps = getPDO()->prepare($sql);
+        $ps->bindParam(':idPost', $idPost);
+        $ps->execute();
+        return $ps->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return [];
+    }
+}
+
+/**
+ * Returns an array containing all medias associated with passed post ID
+ * @param integer $idPost Post ID
+ * @return array
+ */
 function getMediasByPostId($idPost) {
     // Init
     static $ps = null;
@@ -78,13 +101,16 @@ function getMediasByPostId($idPost) {
     try {
         $ps->bindParam(':idPost', $idPost);
         $ps->execute();
-        $medias = $ps->fetchAll(PDO::FETCH_ASSOC);
-        return $medias;
-    } catch (Exception $e) {
+        return $ps->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
         return [];
     }
 }
 
+/**
+ * Returns an HTML string containing every post with its medias
+ * @return string Posts HTML string
+ */
 function displayPostsModal() {
     $posts = getPosts();
     $html = '';
@@ -94,21 +120,54 @@ function displayPostsModal() {
         for ($i = 0; $i < count($post['mediaNames']); $i++) {
             $uploaddir = returnUploadDir($post['mediaTypes'][$i]);
             if (strpos($post['mediaTypes'][$i], 'image/') !== false) {
-                $html .= '<img src="' . $uploaddir . $post['mediaNames'][$i] . '" class="img-responsive" alt="..." style="max-height: 200px">';
+                $html .= '<img src="' . $uploaddir . $post['mediaNames'][$i] . '" alt="..." style="max-height: 300px; margin-right: 10px">';
             } else if (strpos($post['mediaTypes'][$i], 'video/') !== false) {
-                $html .= '<video width="320" height="240" controls autoplay style="margin-right: 10px"><source src="' . $uploaddir . $post['mediaNames'][$i] . '" type="' . $post['mediaTypes'][$i] .'">Video tag not supported</video>';
+                $html .= '<video width="320" height="240" controls autoplay style="margin-right: 10px"><source src="' . $uploaddir . $post['mediaNames'][$i] . '" type="' . $post['mediaTypes'][$i] .'">Video tag not supported</video><br>';
             } else if (strpos($post['mediaTypes'][$i], 'audio/') !== false) {
-                $html .= '<audio controls style="margin-right: 10px"><source src="' . $uploaddir . $post['mediaNames'][$i] . '" type="' . $post['mediaTypes'][$i] . '"></audio>';
+                $html .= '<audio controls style="margin-right: 10px"><source src="' . $uploaddir . $post['mediaNames'][$i] . '" type="' . $post['mediaTypes'][$i] . '">Audio tag not supported</audio><br>';
             }
         }
 
-        $html .= '<br>' . $post['comment'] . '</div>';
+        $html .= $post['comment'] . '</div>';
         $html .= '<div class="modal-footer">Envoyé le ' . strftime('%e %B %Y', strtotime($post['creationDate'])) . ' à ' . strftime('%R', strtotime($post['creationDate'])) . '';
         $html .= '<div class="btn-group btn-actions-group" role="group" aria-label="Actions">';
-        $html .= '<button type="button" class="btn btn-warning"><i class="fas fa-pencil-alt warning-icon"></i></button>';
+        $html .= '<a href="updatePost.php?id=' . $post['idPost'] .'" class="btn btn-warning"><i class="fas fa-pencil-alt warning-icon"></i></a>';
         $html .= '<a href="scripts/removePost.php?id=' . $post['idPost'] . '" class="btn btn-danger"><i class="far fa-trash-alt delete-icon"></i></a>';
         $html .= '</div></div></div>';
     }
+    return $html;
+}
+
+/**
+ * Returns an HTML string containing the whole update panel div for the post
+ * @param integer $idPost Post ID
+ * @return string Update panel HTML string
+ */
+function displayPostUpdatePanel($idPost) {
+    $post = getPostById($idPost);
+    $medias = getMediasByPostId($idPost);
+    $html = '<div class="panel-body"><table><tr><td>';
+    $html .= '<input type="text" name="updatedComment" value="' . $post['comment'] . '">';
+    $html .= '</td><td><input type="submit" class="btn btn-primary btn-sm" name="submitUpdate" value="Mettre à jour le post">';
+    $html .= '</td></tr>';
+    for ($i = 0; $i < count($medias); $i++) {
+        $html .= '<tr><td>';
+        $uploaddir = returnUploadDir($medias[$i]['mediaType']);
+        $path = $uploaddir . $medias[$i]['mediaName'];
+        $fileType = $medias[$i]['mediaType'];
+
+        if (strpos($fileType, 'image/') !== false) {
+            $html .= '<img src="' . $path . '" alt="..." style="max-height: 300px; margin-right: 10px">';
+        } else if (strpos($fileType, 'video/') !== false) {
+            $html .= '<video width="320" height="240" controls autoplay style="margin-right: 10px"><source src="' . $path . '" type="' . $fileType .'">Video tag not supported</video>';
+        } else if (strpos($fileType, 'audio/') !== false) {
+            $html .= '<audio controls style="margin-right: 10px"><source src="' . $path . '" type="' . $fileType . '">Audio tag not supported</audio>';
+        }
+        $html .= '</td><td><a href="scripts/deleteMedia.php?id=" class="btn btn-primary btn-sm">Supprimer</a>';
+        $html .= '</td></tr>';
+    }
+    $html .= '</table></div>';
+
     return $html;
 }
 
