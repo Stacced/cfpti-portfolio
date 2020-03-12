@@ -1,7 +1,9 @@
 <?php
 require('../functions/functions.php');
 session_start();
-$id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_STRING);
+
+// GET variables
+$id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT);
 
 try {
     // Begin transaction
@@ -10,11 +12,15 @@ try {
         if (deletePost($id)) {
             $_SESSION['postOk'] = true;
             $_SESSION['postAlertMsg'] = 'Post supprimé avec succès';
+
+            // Commit transaction
             getPDO()->commit();
         }
     } else {
         $_SESSION['postOk'] = false;
         $_SESSION['postAlertMsg'] = 'Erreur lors de la suppression du post';
+
+        // Rollback changes
         getPDO()->rollBack();
     }
 } catch (Exception $e) {

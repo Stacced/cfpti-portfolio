@@ -67,7 +67,7 @@ function getPosts() {
 
 /**
  * Returns an array containing post data with passed ID
- * @param $idPost
+ * @param int $idPost Post ID
  * @return array|mixed
  */
 function getPostById($idPost) {
@@ -85,7 +85,7 @@ function getPostById($idPost) {
 
 /**
  * Returns an array containing all medias associated with passed post ID
- * @param integer $idPost Post ID
+ * @param int $idPost Post ID
  * @return array
  */
 function getMediasByPostId($idPost) {
@@ -104,6 +104,26 @@ function getMediasByPostId($idPost) {
         return $ps->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
         return [];
+    }
+}
+
+/**
+ * Returns media data from media id
+ * @param int $idMedia Media ID
+ * @return mixed|null
+ */
+function getMediaById($idMedia) {
+    // Init
+    $sql = 'SELECT * FROM medias WHERE idMedia = :idMedia';
+    $ps = getPDO()->prepare($sql);
+
+    // Process
+    try {
+        $ps->bindParam(':idMedia', $idMedia);
+        $ps->execute();
+        return $ps->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        return null;
     }
 }
 
@@ -146,10 +166,11 @@ function displayPostsModal() {
 function displayPostUpdatePanel($idPost) {
     $post = getPostById($idPost);
     $medias = getMediasByPostId($idPost);
-    $html = '<div class="panel-body"><table><tr><td>';
-    $html .= '<input type="text" name="updatedComment" value="' . $post['comment'] . '">';
-    $html .= '</td><td><input type="submit" class="btn btn-primary btn-sm" name="submitUpdate" value="Mettre à jour le post">';
-    $html .= '</td></tr>';
+    $html = '<div class="panel-body"><table><tr>';
+    $html .= '<td><input type="text" name="updatedComment" value="' . $post['comment'] . '"></td>';
+    $html .= '<td><input type="submit" class="btn btn-primary btn-sm" name="submitUpdate" value="Mettre à jour le post"></td>';
+    $html .= '<td><input type="file" name="updatedMedias[]" multiple accept="image/*,video/mp4,video/ogg,video/webm,audio/mpeg,audio/ogg,audio/wav"></td>';
+    $html .= '</tr>';
     for ($i = 0; $i < count($medias); $i++) {
         $html .= '<tr><td>';
         $uploaddir = returnUploadDir($medias[$i]['mediaType']);
@@ -163,7 +184,7 @@ function displayPostUpdatePanel($idPost) {
         } else if (strpos($fileType, 'audio/') !== false) {
             $html .= '<audio controls style="margin-right: 10px"><source src="' . $path . '" type="' . $fileType . '">Audio tag not supported</audio>';
         }
-        $html .= '</td><td><a href="scripts/deleteMedia.php?id=" class="btn btn-primary btn-sm">Supprimer</a>';
+        $html .= '</td><td><a href="scripts/deleteMedia.php?idMedia=' . $medias[$i]['idMedia'] . '&idPost=' . $medias[$i]['idPost'] .'" class="btn btn-primary btn-sm">Supprimer</a>';
         $html .= '</td></tr>';
     }
     $html .= '</table></div>';
@@ -204,13 +225,13 @@ function addPost($comment) {
 }
 
 /**
- * Adds passed $file to database (special format
+ * Adds passed $file to database (special format)
  * $file = [
  *      'mediaType' => string / MIME type,
  *      'mediaName' => string,
  *      'idPost' => int
  * ]
- * @param array $file
+ * @param array $file File following special format
  * @return bool
  */
 function addMedia($file) {
@@ -239,8 +260,33 @@ function addMedia($file) {
 }
 
 /**
+ * Updates post comment in database
+ * @param int $idPost Post ID
+ * @param string $comment Updated comment
+ * @return bool
+ */
+function updatePostComment($idPost, $comment) {
+    // Init
+    $sql = 'UPDATE posts SET comment = :comment WHERE idPost = :idPost';
+    $ps = getPDO()->prepare($sql);
+    $ok = false;
+
+    // Process
+    try {
+        $ps->bindParam(':comment', $comment);
+        $ps->bindParam(':idPost', $idPost);
+        $ok = $ps->execute();
+    } catch (PDOException $e) {
+        $ok = false;
+    }
+
+    // Output
+    return $ok;
+}
+
+/**
  * Deletes post from database
- * @param string $idPost
+ * @param string $idPost Post ID
  * @return bool
  */
 function deletePost($idPost) {
@@ -267,7 +313,7 @@ function deletePost($idPost) {
 
 /**
  * Takes a post id as input and deletes associated medias from disk
- * @param string $idPost
+ * @param int $idPost Post ID
  * @return bool
  */
 function deletePostMediasFiles($idPost) {
@@ -279,6 +325,33 @@ function deletePostMediasFiles($idPost) {
             unlink('../' . $path);
         }
         return true;
+    } catch (Exception $e) {
+        return false;
+    }
+}
+
+/**
+ * Delete media from database (not the media file itself /!\)
+ * @param int $idMedia Media ID
+ * @return bool
+ */
+function deletePostMedia($idMedia) {
+    // Init
+    $sql = 'DELETE FROM medias WHERE idMedia = :idMedia';
+    $ps = getPDO()->prepare($sql);
+    $media = getMediaById($idMedia);
+
+    // Process
+    try {
+        $ps->bindParam(':idMedia', $idMedia);
+
+        // Check if DB delete is OK before unlink
+        if ($ps->execute()) {
+            $mediaPath = returnUploadDir($media['mediaType']) . $media['mediaName'];
+            unlink($mediaPath);
+            return true;
+        }
+        return false;
     } catch (Exception $e) {
         return false;
     }

@@ -2,11 +2,94 @@
 session_start();
 require('functions/functions.php');
 
+// GET & POST variables
 $idPost = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT);
 $submit = filter_input(INPUT_POST, 'submitUpdate', FILTER_SANITIZE_STRING);
 $updatedComment = filter_input(INPUT_POST, 'updatedComment', FILTER_SANITIZE_STRING);
 $updatedMedias = $_FILES['updatedMedias'];
 
+// Check if submit update button was pressed
+if ($submit) {
+	if ($updatedComment !== '' && count(getMediasByPostId($idPost)) > 0) {
+		getPDO()->beginTransaction();
+
+        $mediasCount = count(array_filter($updatedMedias['name']));
+        $sizeOk = checkFilesSize($updatedMedias, $mediasCount);
+        $typeOk = checkFilesType($updatedMedias, $mediasCount);
+        // Check file type
+        if ($typeOk) {
+            // Check if any file is bigger than 3M and the type of the file
+            if ($sizeOk) {
+                $flagMediaError = false;
+                // Loop through all submitted files
+                for ($i = 0; $i < $mediasCount; $i++) {
+                    // Detect file type and move file to corresponding folder
+                    $uploaddir = returnUploadDir($updatedMedias['type'][$i]);
+
+                    $filename = basename(uniqid('', true) . '_' . $updatedMedias['name'][$i]);
+                    $target_file = $uploaddir . $filename;
+                    // Move temp file to local storage
+                    $result = move_uploaded_file($updatedMedias['tmp_name'][$i], $target_file);
+
+                    // Insert into DB
+                    $file = [
+                        'mediaType' => $updatedMedias['type'][$i],
+                        'mediaName' => $filename,
+                        'idPost' => $idPost
+                    ];
+
+                    $mediaAdded = addMedia($file);
+
+                    // Check if media was inserted
+                    if ($mediaAdded) {
+                        $postAlert = 'Média ajouté';
+                    } else {
+                        // Set flag and delete file
+                        $flagMediaError = true;
+                        unlink($target_file);
+
+                        $postAlert = "Une erreur s'est produite lors de l'ajout de votre post";
+                        $postOk = false;
+                    }
+                }
+
+                // Check if all files were inserted
+                if (!$flagMediaError) {
+                    // Commit full transaction (post + media add)
+                    getPDO()->commit();
+                } else {
+                    // Rollback media add
+                    getPDO()->rollBack();
+                }
+            } else {
+                // Incorrect file type
+                // Rollback transaction
+                getPDO()->rollBack();
+
+                $postAlert = 'Un de vos fichiers est trop gros (max 3MB par image / max 10MB par vidéo / max 70MB en tout)';
+                $postOk = false;
+            }
+        } else {
+            // One file or more was too big
+            // Rollback transaction
+            getPDO()->rollBack();
+
+            $postAlert = "Un de vos fichiers n'est pas un média supporté (image, vidéo ou audio)";
+            $postOk = false;
+        }
+
+        if (updatePostComment($idPost, $updatedComment)) {
+            $postOk = true;
+            $postAlertMsg = 'Post mis à jour !';
+        } else {
+            $postOk = false;
+            $postAlertMsg = "Une erreur s'est produite lors de la mise à jour du post";
+        }
+	} else {
+		header('Location: scripts/removePost.php?id=' . $idPost);
+		exit();
+	}
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -63,7 +146,7 @@ $updatedMedias = $_FILES['updatedMedias'];
 								</div>
 
 								<div class="panel panel-default">
-									<form method="POST" action="updatePost.php?id=<?= $idPost ?>">
+									<form method="POST" action="updatePost.php?id=<?= $idPost ?>" enctype="multipart/form-data">
 										<?= displayPostUpdatePanel($idPost) ?>
 									</form>
 								</div>
